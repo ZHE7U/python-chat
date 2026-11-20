@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>天蓝聊天室</title>
+<style>
+  :root {
+    --sky-50: #f0f9ff;
+    --sky-100: #e0f2fe;
+    --sky-200: #bae6fd;
+    --sky-300: #7dd3fc;
+    --sky-400: #38bdf8;
+    --sky-500: #0ea5e9;
+    --sky-600: #0284c7;
+    --sky-700: #0369a1;
+    --ink: #0f172a;
+    --muted: #64748b;
+    --line: #dbeafe;
+    --danger: #e11d48;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+    margin: 0; color: var(--ink);
+    background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 40%, #f8fbff 100%);
+  }
+  button { font-family: inherit; }
+
+  /* ===== 登录 ===== */
+  #login {
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; padding: 20px;
+    background:
+      radial-gradient(1200px 600px at 20% 0%, rgba(56,189,248,.28), transparent 60%),
+      radial-gradient(900px 500px at 90% 100%, rgba(125,211,252,.35), transparent 55%),
+      linear-gradient(160deg, #dff3ff 0%, #eaf8ff 55%, #f6fbff 100%);
+  }
+  .login-card {
+    width: 340px; background: rgba(255,255,255,.94);
+    border: 1px solid var(--sky-100); border-radius: 20px;
+    padding: 34px 30px 26px; display: flex; flex-direction: column; gap: 14px;
+    box-shadow: 0 24px 70px rgba(2,132,199,.18);
+  }
+  .login-card h2 { margin: 0; font-size: 22px; letter-spacing: .5px; }
+  .login-sub { margin: 0 0 4px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+  .login-card input {
+    padding: 12px 14px; font-size: 15px; border: 1.5px solid var(--sky-200);
+    border-radius: 10px; outline: none; transition: border-color .15s, box-shadow .15s;
+  }
+  .login-card input:focus { border-color: var(--sky-400); box-shadow: 0 0 0 4px rgba(56,189,248,.18); }
+  .login-card button {
+    padding: 11px 0; font-size: 15px; font-weight: 600; border: 0; border-radius: 10px;
+    color: #fff; cursor: pointer; letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--sky-400), var(--sky-600));
+    box-shadow: 0 10px 24px rgba(2,132,199,.28); transition: transform .12s, box-shadow .12s;
+  }
+  .login-card button:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(2,132,199,.34); }
+
+  /* ===== 主布局 ===== */
+  #app { display: none; height: 100vh; }
+  #app.on { display: flex; }
+
+  aside {
+    width: 246px; flex: none; background: #fff; border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; box-shadow: 2px 0 16px rgba(2,132,199,.05);
+  }
+  aside h3 {
+    font-size: 12px; color: var(--muted); margin: 16px 16px 6px;
+    letter-spacing: .08em; font-weight: 600;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  aside h3 .hint { font-weight: 400; font-size: 11px; color: #94a3b8; letter-spacing: 0; }
+  #room-list, #member-list { list-style: none; margin: 0; padding: 0 10px; overflow-y: auto; }
+  #member-list { max-height: 32vh; }
+
+  .room-item {
+    padding: 9px 10px; border-radius: 10px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; font-size: 14px;
+    transition: background .12s;
+  }
+  .room-item:hover { background: var(--sky-50); }
+  .room-item.active { background: var(--sky-100); color: var(--sky-700); font-weight: 600; }
+  .room-item .room-icon { font-size: 15px; width: 20px; text-align: center; flex: none; }
+  .room-item .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .room-item .kind {
+    font-size: 10px; color: var(--sky-600); background: var(--sky-50);
+    border: 1px solid var(--sky-200); border-radius: 8px; padding: 1px 6px; flex: none;
+  }
+  .badge {
+    background: var(--danger); color: #fff; border-radius: 9px; padding: 0 6px;
+    font-size: 11px; line-height: 17px; min-width: 17px; text-align: center; flex: none;
+  }
+  .section-label { font-size: 11px; color: #94a3b8; padding: 14px 10px 4px; letter-spacing: .06em; }
+
+  #new-room {
+    margin: 10px 14px; padding: 8px; font-size: 13px; font-weight: 600;
+    border: 1.5px dashed var(--sky-300); background: var(--sky-50);
+    border-radius: 10px; cursor: pointer; color: var(--sky-600);
+  }
+  #new-room:hover { background: var(--sky-100); }
+  #new-room-box { display: none; margin: 0 14px 8px; gap: 6px; }
+  #new-room-box.on { display: flex; }
+  #new-room-input {
+    flex: 1; min-width: 0; padding: 7px 9px; font-size: 13px;
+    border: 1.5px solid var(--sky-200); border-radius: 8px; outline: none;
+  }
+  #new-room-input:focus { border-color: var(--sky-400); }
+  #new-room-ok {
+    padding: 6px 12px; font-size: 13px; border: 0; border-radius: 8px;
+    background: var(--sky-500); color: #fff; cursor: pointer;
+  }
+  #new-room-ok:hover { background: var(--sky-600); }
+
+  .member {
+    padding: 7px 10px; font-size: 14px; border-radius: 10px;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+  }
+  .member:hover { background: var(--sky-50); }
+  .member .avatar-sm {
+    width: 24px; height: 24px; border-radius: 50%; flex: none;
+    background: var(--sky-100); color: var(--sky-700);
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  .member .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dm-btn {
+    border: 0; background: var(--sky-100); color: var(--sky-600);
+    border-radius: 10px; padding: 3px 9px; font-size: 11px; cursor: pointer;
+  }
+  .dm-btn:hover { background: var(--sky-200); color: var(--sky-700); }
+
+  main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #topbar {
+    height: 54px; display: flex; align-items: center; gap: 12px; padding: 0 18px;
+    background: rgba(255,255,255,.9); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  #room-title { font-weight: 700; font-size: 16px; }
+  #status { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #cbd5e1; }
+  .dot.open { background: #22c55e; }
+  .dot.connecting, .dot.reconnecting { background: #f59e0b; }
+  .dot.closed { background: #ef4444; }
+  #sync-hint { color: #f59e0b; font-size: 12px; }
+
+  #chat {
+    flex: 1; overflow-y: auto; padding: 18px 22px;
+    background:
+      radial-gradient(800px 400px at 100% 0%, rgba(186,230,253,.35), transparent 60%),
+      linear-gradient(180deg, #f0f9ff 0%, #f8fbff 100%);
+  }
+  #load-more {
+    display: block; margin: 0 auto 14px; padding: 5px 16px; font-size: 12px;
+    border: 1px solid var(--sky-200); background: #fff; color: var(--sky-600);
+    border-radius: 14px; cursor: pointer;
+  }
+  #load-more:hover { border-color: var(--sky-400); }
+  #load-more:disabled { color: #b6c2d0; cursor: default; border-color: #e5edf5; }
+
+  .row { margin-bottom: 14px; display: flex; gap: 9px; align-items: flex-start; }
+  .row.mine { flex-direction: row-reverse; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; background: #e2e8f0; color: #475569;
+  }
+  .row.mine .avatar { background: linear-gradient(135deg, var(--sky-300), var(--sky-500)); color: #fff; }
+  .body { max-width: 70%; display: flex; flex-direction: column; align-items: flex-start; }
+  .row.mine .body { align-items: flex-end; }
+  .meta { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+  .bubble {
+    padding: 9px 13px; border-radius: 4px 14px 14px 14px; background: #fff;
+    border: 1px solid var(--line); word-break: break-word; white-space: pre-wrap;
+    font-size: 14px; line-height: 1.55; color: #1e293b;
+    box-shadow: 0 2px 8px rgba(15,23,42,.04);
+  }
+  .row.mine .bubble {
+    background: linear-gradient(135deg, var(--sky-300), var(--sky-500));
+    border-color: transparent; color: #fff;
+    border-radius: 14px 4px 14px 14px;
+    box-shadow: 0 6px 16px rgba(14,165,233,.28);
+  }
+  .row.failed .bubble { background: #ffe4e6; border-color: #fda4af; color: #881337; box-shadow: none; }
+  .recalled { color: #94a3b8; font-style: italic; font-size: 13px; padding: 4px 2px; }
+  .tag { font-size: 11px; color: #94a3b8; margin-left: 4px; }
+  .row.mine .tag { color: rgba(255,255,255,.8); }
+  .receipt { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  .actions { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .actions span { cursor: pointer; margin-left: 10px; opacity: .75; }
+  .actions span:hover { opacity: 1; color: var(--sky-600); }
+  .actions .retry { opacity: 1; color: var(--danger); font-weight: 600; }
+  .system { text-align: center; color: #94a3b8; font-size: 12px; margin: 12px 0; }
+  .unread-mark { text-align: center; margin: 12px 0; }
+  .unread-mark span {
+    background: var(--sky-100); color: var(--sky-600);
+    border-radius: 12px; padding: 3px 12px; font-size: 12px;
+  }
+
+  footer { padding: 12px 18px 16px; background: #fff; border-top: 1px solid var(--line); }
+  #composer { display: flex; gap: 10px; align-items: flex-end; }
+  #input {
+    flex: 1; padding: 11px 13px; font-size: 15px; border: 1.5px solid var(--sky-200);
+    border-radius: 12px; resize: none; max-height: 120px; font-family: inherit;
+    outline: none; background: var(--sky-50);
+    transition: border-color .15s, box-shadow .15s, background .15s;
+  }
+  #input:focus { border-color: var(--sky-400); background: #fff; box-shadow: 0 0 0 4px rgba(56,189,248,.15); }
+  #send {
+    padding: 10px 24px; border: 0; border-radius: 12px; color: #fff;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    background: linear-gradient(135deg, var(--sky-400), var(--sky-600));
+    box-shadow: 0 8px 20px rgba(2,132,199,.25);
+    transition: transform .12s, box-shadow .12s;
+  }
+  #send:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(2,132,199,.32); }
+  #send:disabled { background: #cbd5e1; cursor: default; box-shadow: none; }
+  #hint { font-size: 12px; color: var(--danger); height: 16px; margin-top: 6px; }
+  #counter { font-size: 12px; color: #94a3b8; padding-bottom: 12px; }
+  #counter.over { color: var(--danger); }
+
+  aside ul::-webkit-scrollbar, #chat::-webkit-scrollbar { width: 6px; }
+  aside ul::-webkit-scrollbar-thumb, #chat::-webkit-scrollbar-thumb {
+    background: #cfe8f7; border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="login-card">
+    <h2>🐍 终极版局域网聊天室</h2>
+    <p class="login-sub">天蓝色局域网聊天室 · 登录后可在左侧自由切换聊天室，点击在线成员即可私聊</p>
+    <input id="name-input" maxlength="20" placeholder="请输入你的昵称（最多20字）">
+    <button id="enter">进入聊天室</button>
+    <div id="login-hint" style="color:#e11d48;font-size:13px;height:16px"></div>
+  </div>
+</div>
+
+<div id="app">
+  <aside>
+    <h3>聊天室 <span class="hint">点击切换</span></h3>
+    <ul id="room-list"></ul>
+    <button id="new-room">+ 新建聊天室</button>
+    <div id="new-room-box">
+      <input id="new-room-input" maxlength="20" placeholder="房间名，最多20字">
+      <button id="new-room-ok">建</button>
+    </div>
+    <h3>在线成员 <span id="member-count" style="font-weight:400;color:#94a3b8"></span></h3>
+    <ul id="member-list"></ul>
+  </aside>
+
+  <main>
+    <div id="topbar">
+      <span id="room-title">大厅</span>
+      <span id="status"><span class="dot"></span><span id="status-text">连接中…</span></span>
+      <span id="sync-hint"></span>
+    </div>
+    <div id="chat"><button id="load-more" disabled>加载更早的消息</button></div>
+    <footer>
+      <div id="composer">
+        <textarea id="input" rows="1" maxlength="600" placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+        <span id="counter">0/500</span>
+        <button id="send">发送</button>
+      </div>
+      <div id="hint"></div>
+    </footer>
+  </main>
+</div>
+
+<script>
+"use strict";
+
+const MAX_TEXT = 500;
+const PAGE = 30;
+const PING_MS = 20000;
+const ACK_TIMEOUT = 6000;
+
+const state = {
+  me: "",
+  ws: null,
+  status: "closed",          // connecting | open | reconnecting | closed
+  retry: 0,
+  timer: null,
+  pingTimer: null,
+  current: null,             // 当前房间 id
+  rooms: new Map(),          // id -> room
+  messages: new Map(),       // id -> [msg]（已按 seq 排序）
+  pending: new Map(),        // client_id -> {room, text, tries}
+  members: [],
+  membersKnown: false,
+  blocked: false,            // 被服务器拒绝登录（同 IP 换账号）时置真，停止重连
+};
+
+const $ = (id) => document.getElementById(id);
+const chatEl = $("chat"), roomListEl = $("room-list"), memberListEl = $("member-list");
+
+localStorage.removeItem("lastReadId");   // 旧版遗留字段，已不再使用
+
+// ---------- 工具 ----------
+function storeKey(room) { return "lastSeq:" + state.me + ":" + room; }
+function loadSeq(room) { return Number(localStorage.getItem(storeKey(room)) || 0); }
+function saveSeq(room, seq) {
+  if (seq > loadSeq(room)) localStorage.setItem(storeKey(room), String(seq));
+}
+function fmtTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function room(id) { return state.rooms.get(id); }
+function msgList(id) {
+  if (!state.messages.has(id)) state.messages.set(id, []);
+  return state.messages.get(id);
+}
+function findMsg(id) {
+  for (const list of state.messages.values()) {
+    const m = list.find((x) => x.id === id);
+    if (m) return m;
+  }
+  return null;
+}
+function setStatus(s, text) {
+  state.status = s;
+  document.querySelector("#status .dot").className = "dot " + s;
+  $("status-text").textContent = text;
+  $("send").disabled = s !== "open";
+  if (s !== "open") {
+    // 断线时人数是未知的，不能显示成 0
+    state.membersKnown = false;
+    renderMembers();
+  }
+  $("sync-hint").textContent = s === "open" ? "" : "联网后会自动补齐断线期间的消息";
+}
+
+// ---------- 连接 ----------
+function backToLogin(message) {
+  // 同一个 IP 换账号登录被服务器拒绝：退回登录页，不再自动重连
+  state.blocked = true;
+  clearTimeout(state.timer);
+  stopPing();
+  if (state.ws) { try { state.ws.close(); } catch (e) {} state.ws = null; }
+  state.me = "";
+  state.retry = 0;
+  state.current = null;
+  state.rooms.clear();
+  state.messages.clear();
+  state.pending.clear();
+  state.members = [];
+  state.membersKnown = false;
+  $("app").classList.remove("on");
+  $("login").style.display = "flex";
+  $("login-hint").textContent = message || "登录失败，请换一个账号";
+}
+
+function connect() {
+  setStatus(state.retry ? "reconnecting" : "connecting", state.retry ? "正在重连…" : "连接中…");
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}/ws/${encodeURIComponent(state.me)}`);
+  state.ws = ws;
+
+  ws.onopen = () => {
+    state.retry = 0;
+    setStatus("open", "已连接");
+    $("hint").textContent = "";
+    startPing();
+    if (state.current) openRoom(state.current, true);
+  };
+  ws.onclose = () => {
+    stopPing();
+    if (state.blocked) return;               // 已退回登录页，不再重连
+    setStatus(state.retry ? "reconnecting" : "closed", "断线，正在重连…");
+    const delay = Math.min(15000, 1000 * Math.pow(2, state.retry));
+    state.retry += 1;
+    clearTimeout(state.timer);
+    state.timer = setTimeout(connect, delay);
+  };
+  ws.onerror = () => { try { ws.close(); } catch (e) {} };
+  ws.onmessage = (ev) => {
+    let data;
+    try { data = JSON.parse(ev.data); } catch (e) { return; }
+    handle(data);
+  };
+}
+
+function startPing() {
+  stopPing();
+  state.pingTimer = setInterval(() => {
+    if (state.ws && state.ws.readyState === WebSocket.OPEN) {
+      state.ws.send(JSON.stringify({ type: "ping" }));
+    }
+  }, PING_MS);
+}
+function stopPing() { clearInterval(state.pingTimer); }
+function sendRaw(obj) {
+  if (!state.ws || state.ws.readyState !== WebSocket.OPEN) return false;
+  state.ws.send(JSON.stringify(obj));
+  return true;
+}
+
+// ---------- 服务端事件 ----------
+function handle(d) {
+  switch (d.type) {
+    case "hello":
+      break;
+    case "rooms":
+      syncRooms(d.rooms);
+      break;
+    case "presence":
+      state.members = d.users || [];
+      state.membersKnown = true;
+      renderMembers();
+      break;
+    case "msg":
+      receiveMessage(d);
+      break;
+    case "ack":
+      onAck(d);
+      break;
+    case "reject":
+      if (d.code === "ip_taken") { backToLogin(d.message); return; }
+      onReject(d);
+      break;
+    case "error":
+      onReject(d);
+      break;
+    case "recall":
+      onRecall(d);
+      break;
+    case "edit":
+      onEdit(d);
+      break;
+    case "read":
+      onReadUpdate(d);
+      break;
+    case "room_state":
+      onRoomState(d);
+      break;
+    case "history":
+      onHistory(d);
+      break;
+    case "room_created":
+      break;
+    case "dm_invite":
+      break;
+    case "dm_opened":
+      openRoom(d.room.id, true);
+      break;
+  }
+}
+
+function syncRooms(list) {
+  const seen = new Set();
+  for (const r of list) {
+    seen.add(r.id);
+    const old = state.rooms.get(r.id) || {};
+    state.rooms.set(r.id, Object.assign({}, old, r));
+    msgList(r.id);
+  }
+  for (const id of [...state.rooms.keys()]) if (!seen.has(id)) state.rooms.delete(id);
+  renderRooms();
+  if (!state.current) {
+    // 登录后自动落到第一个公开房间，之后可在左侧自由切换
+    const first = list.find((r) => r.kind === "public") || list[0];
+    if (first) openRoom(first.id);
+  }
+}
+
+function receiveMessage(m) {
+  const list = msgList(m.room);
+  if (list.some((x) => x.id === m.id)) return;      // 补发与实时可能重复，按 id 去重
+  const pend = state.pending.get(m.id);
+  if (pend) { state.pending.delete(m.id); clearTimeout(pend.timer); }
+  list.push(m);
+  list.sort((a, b) => a.seq - b.seq);
+  saveSeq(m.room, m.seq);
+
+  if (m.room === state.current) {
+    renderMessages();
+    maybeMarkRead();
+  } else {
+    const r = room(m.room);
+    if (r) { r.unread = (r.unread || 0) + 1; renderRooms(); }
+  }
+}
+
+function onAck(d) {
+  const pend = state.pending.get(d.client_id);
+  if (pend) { clearTimeout(pend.timer); state.pending.delete(d.client_id); }
+  const m = findMsg(d.id);
+  if (m) { m.pending = false; m.failed = false; }
+  if (d.room === state.current) renderMessages();
+}
+
+function onReject(d) {
+  if (d.client_id) {
+    const pend = state.pending.get(d.client_id);
+    if (pend) { clearTimeout(pend.timer); state.pending.delete(d.client_id); }
+    const m = findMsg(d.client_id);
+    if (m) { m.pending = false; m.failed = true; }
+    if (state.current) renderMessages();
+  }
+  $("hint").textContent = d.message || "操作失败";
+  setTimeout(() => { if ($("hint").textContent === (d.message || "操作失败")) $("hint").textContent = ""; }, 4000);
+}
+
+function onRecall(d) {
+  const m = findMsg(d.id);
+  if (m) { m.is_recalled = true; m.text = ""; }
+  if (d.room === state.current) renderMessages();
+}
+
+function onEdit(d) {
+  const m = findMsg(d.id);
+  if (m) { m.text = d.text; m.is_edited = true; }
+  if (d.room === state.current) renderMessages();
+}
+
+function onReadUpdate(d) {
+  if (d.user === state.me) return;
+  for (const m of msgList(d.room)) {
+    if (m.from === state.me && m.seq <= d.seq && !m.read_by.includes(d.user)) {
+      m.read_by.push(d.user);
+    }
+  }
+  if (d.room === state.current) renderMessages();
+}
+
+function onRoomState(d) {
+  const r = room(d.room.id) || {};
+  state.rooms.set(d.room.id, Object.assign({}, r, d.room, { unread: 0 }));
+  const list = msgList(d.room.id);
+  for (const m of d.messages) {
+    if (!list.some((x) => x.id === m.id)) list.push(m);
+    saveSeq(d.room.id, m.seq);
+  }
+  list.sort((a, b) => a.seq - b.seq);
+  state.lastReadSeq = d.room.last_read_seq;
+  if (d.gap) $("hint").textContent = "中间有一段消息服务器已不再保留，可能看不全";
+  if (d.truncated) $("sync-hint").textContent = "离线期间消息较多，已加载最近 200 条";
+  if (d.room.id === state.current) {
+    $("room-title").textContent = d.room.name || "";
+    renderMessages(true);
+    renderRooms();
+    maybeMarkRead();
+  }
+}
+
+function onHistory(d) {
+  const list = msgList(d.room);
+  const before = list.length ? list[0].seq : Infinity;
+  for (const m of d.messages) if (!list.some((x) => x.id === m.id)) list.push(m);
+  list.sort((a, b) => a.seq - b.seq);
+  $("load-more").disabled = !d.has_more;
+  $("load-more").textContent = d.has_more ? "加载更早的消息" : "没有更早的消息了";
+  if (d.room === state.current) renderMessages(false, before);
+}
+
+// ---------- 房间 ----------
+function openRoom(id, force) {
+  if (!force && state.current === id) return;
+  state.current = id;
+  renderRooms();
+  renderMessages();
+  sendRaw({ type: "open_room", room: id, after_seq: loadSeq(id) });
+  $("load-more").disabled = false;
+  $("load-more").textContent = "加载更早的消息";
+  $("room-title").textContent = (room(id) && room(id).name) || "";
+  $("input").focus();
+}
+
+function maybeMarkRead() {
+  const r = room(state.current);
+  if (!r) return;
+  const list = msgList(state.current);
+  if (!list.length) return;
+  const maxSeq = list[list.length - 1].seq;
+  if (document.visibilityState !== "visible") return;
+  sendRaw({ type: "read", room: state.current, seq: maxSeq });
+  r.unread = 0;
+  renderRooms();
+}
+
+function renderRooms() {
+  roomListEl.innerHTML = "";
+  const items = [...state.rooms.values()].filter((r) => r.kind !== "dm");
+  const dms = [...state.rooms.values()].filter((r) => r.kind === "dm");
+  const add = (r) => {
+    const li = document.createElement("li");
+    li.className = "room-item" + (r.id === state.current ? " active" : "");
+    const icon = document.createElement("span");
+    icon.className = "room-icon";
+    icon.textContent = r.kind === "dm" ? "💬" : (r.id === "lobby" ? "🏠" : "🗨");
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = r.name;
+    li.append(icon, name);
+    if (r.kind === "dm") {
+      const k = document.createElement("span");
+      k.className = "kind";
+      k.textContent = "私聊";
+      li.appendChild(k);
+    }
+    if (r.unread > 0) {
+      const b = document.createElement("span");
+      b.className = "badge";
+      b.textContent = r.unread > 99 ? "99+" : r.unread;
+      li.appendChild(b);
+    }
+    li.onclick = () => openRoom(r.id);
+    roomListEl.appendChild(li);
+  };
+  items.forEach(add);
+  if (dms.length) {
+    const h = document.createElement("li");
+    h.className = "section-label";
+    h.textContent = "私聊";
+    roomListEl.appendChild(h);
+    dms.forEach(add);
+  }
+}
+
+function renderMembers() {
+  memberListEl.innerHTML = "";
+  $("member-count").textContent = state.membersKnown ? `(${state.members.length})` : "(未知)";
+  if (!state.membersKnown) {
+    const li = document.createElement("li");
+    li.className = "member";
+    li.style.color = "#94a3b8";
+    li.textContent = "人数未知";
+    memberListEl.appendChild(li);
+    return;
+  }
+  for (const name of state.members) {
+    const li = document.createElement("li");
+    li.className = "member";
+    const av = document.createElement("span");
+    av.className = "avatar-sm";
+    av.textContent = name.slice(0, 1);
+    const span = document.createElement("span");
+    span.className = "name";
+    span.textContent = name + (name === state.me ? "（我）" : "");
+    li.append(av, span);
+    if (name !== state.me) {
+      const btn = document.createElement("button");
+      btn.className = "dm-btn";
+      btn.textContent = "私聊";
+      btn.onclick = (e) => { e.stopPropagation(); sendRaw({ type: "open_dm", peer: name }); };
+      li.appendChild(btn);
+      li.onclick = () => sendRaw({ type: "open_dm", peer: name });
+    }
+    memberListEl.appendChild(li);
+  }
+}
+
+// ---------- 消息渲染 ----------
+function renderMessages(keepBottom, keepBefore) {
+  const id = state.current;
+  const list = msgList(id);
+  const atBottom = chatEl.scrollHeight - chatEl.scrollTop - chatEl.clientHeight < 60;
+  const prevHeight = chatEl.scrollHeight;
+
+  chatEl.innerHTML = "";
+
+  const more = document.createElement("button");
+  more.id = "load-more";
+  more.textContent = "加载更早的消息";
+  more.onclick = loadMore;
+  chatEl.appendChild(more);
+
+  let marked = false;
+  const lastRead = state.lastReadSeq || 0;
+  for (const m of list) {
+    if (!marked && lastRead && m.seq > lastRead) {
+      const div = document.createElement("div");
+      div.className = "unread-mark";
+      const pill = document.createElement("span");
+      pill.textContent = "以下是新消息";
+      div.appendChild(pill);
+      chatEl.appendChild(div);
+      marked = true;
+    }
+    chatEl.appendChild(buildRow(m));
+  }
+
+  if (keepBefore !== undefined) {
+    chatEl.scrollTop = chatEl.scrollHeight - prevHeight;
+  } else if (keepBottom || atBottom) {
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+}
+
+function buildRow(m) {
+  const mine = m.from === state.me;
+  const row = document.createElement("div");
+  row.className = "row" + (mine ? " mine" : "");
+  row.dataset.id = m.id;
+
+  const av = document.createElement("div");
+  av.className = "avatar";
+  av.textContent = (m.from || "?").slice(0, 1);
+
+  const body = document.createElement("div");
+  body.className = "body";
+
+  const meta = document.createElement("div");
+  meta.className = "meta";
+  meta.textContent = `${m.from} · ${fmtTime(m.ts)}`;
+  body.appendChild(meta);
+
+  if (m.is_recalled) {
+    const s = document.createElement("div");
+    s.className = "recalled";
+    s.textContent = "[该消息已被撤回]";
+    body.appendChild(s);
+    row.append(av, body);
+    return row;
+  }
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.textContent = m.text;                  // 一律用文本节点，杜绝 XSS
+  if (m.is_edited) {
+    const t = document.createElement("span");
+    t.className = "tag";
+    t.textContent = "(已编辑)";
+    bubble.appendChild(t);
+  }
+  body.appendChild(bubble);
+
+  if (mine) {
+    if (m.failed) row.classList.add("failed");
+    if (m.failed || m.pending) {
+      const a = document.createElement("div");
+      a.className = "actions";
+      if (m.pending) {
+        const s = document.createElement("span");
+        s.textContent = "发送中…";
+        a.appendChild(s);
+      } else {
+        const s = document.createElement("span");
+        s.className = "retry";
+        s.textContent = "发送失败，点击重试";
+        s.onclick = () => retryMessage(m);
+        a.appendChild(s);
+      }
+      body.appendChild(a);
+      row.append(av, body);
+      return row;
+    }
+    const a = document.createElement("div");
+    a.className = "actions";
+    const r1 = document.createElement("span");
+    r1.textContent = "撤回";
+    r1.onclick = () => sendRaw({ type: "recall", room: m.room, id: m.id });
+    const r2 = document.createElement("span");
+    r2.textContent = "编辑";
+    r2.onclick = () => {
+      const next = prompt("修改你的消息：", m.text);
+      if (next !== null && next.trim() && next.trim() !== m.text) {
+        sendRaw({ type: "edit", room: m.room, id: m.id, text: next.trim() });
+      }
+    };
+    a.appendChild(r1);
+    a.appendChild(r2);
+    body.appendChild(a);
+
+    const rc = document.createElement("div");
+    rc.className = "receipt";
+    const readers = m.read_by.filter((u) => u !== state.me);
+    rc.textContent = readers.length ? "已读：" + readers.join("、") : "未读";
+    body.appendChild(rc);
+  }
+  row.append(av, body);
+  return row;
+}
+
+// ---------- 发送 ----------
+function validate(text) {
+  if (!text) return "消息不能为空";
+  if (text.length > MAX_TEXT) return `消息最多 ${MAX_TEXT} 字，现在 ${text.length} 字`;
+  return "";
+}
+
+function sendMessage() {
+  const input = $("input");
+  const text = input.value.trim();
+  const err = validate(text);
+  if (err) { $("hint").textContent = err; return; }     // 拒绝时保留输入内容
+  $("hint").textContent = "";
+
+  const clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+  const list = msgList(state.current);
+  const optimistic = {
+    id: clientId, seq: Number.MAX_SAFE_INTEGER, room: state.current,
+    from: state.me, text, ts: new Date().toISOString(),
+    is_recalled: false, is_edited: false, read_by: [], pending: true,
+  };
+  list.push(optimistic);
+  input.value = "";
+  updateCounter();
+  renderMessages();
+
+  if (!sendRaw({ type: "send", room: state.current, text, client_id: clientId })) {
+    optimistic.pending = false;
+    optimistic.failed = true;
+    renderMessages();
+    return;
+  }
+  const timer = setTimeout(() => {
+    optimistic.pending = false;
+    optimistic.failed = true;
+    renderMessages();
+  }, ACK_TIMEOUT);
+  state.pending.set(clientId, { room: state.current, text, timer, tries: 1 });
+}
+
+function retryMessage(m) {
+  m.failed = false;
+  m.pending = true;
+  renderMessages();
+  // 重试沿用同一个 client_id：服务器端靠它做幂等，不会产生重复消息
+  if (!sendRaw({ type: "send", room: m.room, text: m.text, client_id: m.id })) {
+    m.pending = false;
+    m.failed = true;
+    renderMessages();
+    return;
+  }
+  const timer = setTimeout(() => {
+    m.pending = false;
+    m.failed = true;
+    renderMessages();
+  }, ACK_TIMEOUT);
+  state.pending.set(m.id, { room: m.room, text: m.text, timer, tries: 2 });
+}
+
+function loadMore() {
+  const list = msgList(state.current);
+  const before = list.length ? list[0].seq : 0;
+  if (!before) return;
+  $("load-more").disabled = true;
+  sendRaw({ type: "history", room: state.current, before_seq: before });
+}
+
+function updateCounter() {
+  const n = $("input").value.length;
+  $("counter").textContent = `${n}/${MAX_TEXT}`;
+  $("counter").className = n > MAX_TEXT ? "over" : "";
+}
+
+// ---------- 事件绑定 ----------
+$("enter").onclick = () => {
+  const name = $("name-input").value.trim();
+  if (!name) { $("login-hint").textContent = "请输入昵称"; return; }
+  if (name.length > 20) { $("login-hint").textContent = "昵称最多 20 个字"; return; }
+  if (/[\s:|]/.test(name)) { $("login-hint").textContent = "昵称不能包含空格、冒号或竖线"; return; }
+  state.me = name;
+  state.blocked = false;
+  localStorage.setItem("myUsername", name);
+  $("login").style.display = "none";
+  $("app").classList.add("on");
+  connect();
+};
+
+$("name-input").addEventListener("keydown", (e) => { if (e.key === "Enter") $("enter").click(); });
+$("send").onclick = sendMessage;
+
+$("input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+$("input").addEventListener("input", () => {
+  updateCounter();
+  $("input").style.height = "auto";
+  $("input").style.height = Math.min(110, $("input").scrollHeight) + "px";
+});
+
+$("new-room").onclick = () => {
+  $("new-room-box").classList.toggle("on");
+  if ($("new-room-box").classList.contains("on")) $("new-room-input").focus();
+};
+
+function submitRoom() {
+  const name = $("new-room-input").value.trim();
+  if (!name) { $("hint").textContent = "房间名不能为空"; return; }
+  sendRaw({ type: "create_room", name });
+  $("new-room-input").value = "";
+  $("new-room-box").classList.remove("on");
+}
+$("new-room-ok").onclick = submitRoom;
+$("new-room-input").addEventListener("keydown", (e) => { if (e.key === "Enter") submitRoom(); });
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") maybeMarkRead();
+});
+
+const saved = localStorage.getItem("myUsername");
+if (saved) $("name-input").value = saved;
+</script>
+</body>
+</html>
