@@ -1,3 +1,6 @@
 .venv/
 __pycache__/
 chat.db
+server_backup_*.py
+/SkyChat-APP/
+app/SkyChat-APP/unpackage/

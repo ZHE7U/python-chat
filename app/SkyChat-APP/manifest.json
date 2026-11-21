@@ -121,6 +121,7 @@
                 "keystore" : "", /*Android应用打包使用的密钥库文件*/
                 "password" : "", /*Android应用打包使用密钥库中证书的密码*/
                 "aliasname" : "", /*Android应用打包使用密钥库中证书的别名*/
+                "usesCleartextTraffic" : true, /*允许明文 http/ws 访问局域网服务器（Android 9 及以上默认禁止）*/
                 "permissions" : [
                     "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
                     "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
@@ -168,7 +169,7 @@
                         "normal7" : "", /*iPad iOS7程序图标，分辨率：76x76*/
                         "retina7" : "", /*iPad iOS7高分屏程序图标，分辨率：152x152*/
                         "spotlight-normal" : "", /*iPad Spotlight搜索程序图标，分辨率：50x50*/
-                        "spotlight-retina" : "", /*iPad高分屏Spotlight搜索程序图标，分辨率：100x100*/
+                        "spotlight-retina" : "", /*iPad高分屏搜索程序图标，分辨率：100x100*/
                         "spotlight-normal7" : "", /*iPad iOS7 Spotlight搜索程序图标，分辨率：40x40*/
                         "spotlight-retina7" : "", /*iPad iOS7高分屏Spotlight搜索程序图标，分辨率：80x80*/
                         "settings-normal" : "", /*iPad设置页面程序图标，分辨率：29x29*/
@@ -199,7 +200,7 @@
                         "landscape" : "", /*iPad横屏启动图片，分辨率：1024x748*/
                         "landscape-retina" : "", /*iPad高分屏横屏启动图片，分辨率：2048x1496*/
                         "portrait7" : "", /*iPad iOS7竖屏启动图片，分辨率：768x1024*/
-                        "portrait-retina7" : "", /*iPad iOS7高分屏竖屏图片，分辨率：1536x2048*/
+                        "portrait-retina7" : "", /*iPad iOS7高分屏竖屏启动图片，分辨率：1536x2048*/
                         "landscape7" : "", /*iPad iOS7横屏启动图片，分辨率：1024x768*/
                         "landscape-retina7" : "" /*iPad iOS7高分屏横屏启动图片，分辨率：2048x1536*/
                     }
